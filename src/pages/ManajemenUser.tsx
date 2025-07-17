@@ -57,6 +57,8 @@ const ManajemenUser: React.FC = () => {
   const [editingPegawai, setEditingPegawai] = useState<Pegawai | null>(null);
   const [form] = Form.useForm();
   const [filterText, setFilterText] = useState("");
+  const [filterPosisi, setFilterPosisi] = useState("");
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -131,9 +133,9 @@ const ManajemenUser: React.FC = () => {
     }
   };
 
-  const renderPelatihanTag = (label: string, value: number) => (
-    <Tag color={value ? "blue" : "default"}>{label}</Tag>
-  );
+  const renderPelatihanTag = (label: string, value: number) =>
+    value === 1 ? <Tag color="blue">{label}</Tag> : null;
+
 
   const columns = [
     {
@@ -162,29 +164,45 @@ const ManajemenUser: React.FC = () => {
     {
       title: "Pelatihan Dasar",
       key: "pelatihanDasar",
-      render: (record: Pegawai) => (
-        <Space wrap>
-          {renderPelatihanTag("B1", record.b1)}
-          {renderPelatihanTag("B2", record.b2)}
-          {renderPelatihanTag("B3", record.b3)}
-          {renderPelatihanTag("B4", record.b4)}
-          {renderPelatihanTag("B5", record.b5)}
-        </Space>
-      ),
+      render: (record: Pegawai) => {
+        const items = [
+          { label: "B1", value: record.b1 },
+          { label: "B2", value: record.b2 },
+          { label: "B3", value: record.b3 },
+          { label: "B4", value: record.b4 },
+          { label: "B5", value: record.b5 },
+        ].filter((item) => item.value === 1); // tampilkan hanya yang aktif
+
+        return (
+          <Space wrap>
+            {items.map((item) => renderPelatihanTag(item.label, item.value))}
+            {items.length === 0 && <span>-</span>}
+          </Space>
+        );
+      },
     },
+
     {
       title: "Pelatihan Advance",
       key: "pelatihanAdvance",
-      render: (record: Pegawai) => (
-        <Space wrap>
-          {renderPelatihanTag("A1", record.a1)}
-          {renderPelatihanTag("A2", record.a2)}
-          {renderPelatihanTag("A3", record.a3)}
-          {renderPelatihanTag("A4", record.a4)}
-          {renderPelatihanTag("A5", record.a5)}
-        </Space>
-      ),
+      render: (record: Pegawai) => {
+        const items = [
+          { label: "A1", value: record.a1 },
+          { label: "A2", value: record.a2 },
+          { label: "A3", value: record.a3 },
+          { label: "A4", value: record.a4 },
+          { label: "A5", value: record.a5 },
+        ].filter((item) => item.value === 1); // tampilkan hanya yang aktif
+
+        return (
+          <Space wrap>
+            {items.map((item) => renderPelatihanTag(item.label, item.value))}
+            {items.length === 0 && <span>-</span>}
+          </Space>
+        );
+      },
     },
+
     {
       title: "Status Akun",
       dataIndex: "statusAkun",
@@ -236,11 +254,12 @@ const ManajemenUser: React.FC = () => {
           <Col>
             <Space>
               <Input.Search
-                placeholder="Cari nama Karyawan"
+                placeholder="Cari posisi"
                 allowClear
-                onChange={(e) => setFilterText(e.target.value)}
+                onChange={(e) => setFilterPosisi(e.target.value)}
                 style={{ width: 200 }}
               />
+
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

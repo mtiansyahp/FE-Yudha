@@ -129,7 +129,7 @@ export default function AdminUnit() {
 
     return (
         <div style={{ padding: 24 }}>
-            <Title level={3}>Admin Unit - Surat Permohonan Pelatihan</Title>
+            <Title level={3}>Menu Pelatihan - Surat Permohonan Pelatihan</Title>
             <Table
                 columns={columns}
                 dataSource={data}

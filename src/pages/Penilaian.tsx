@@ -253,20 +253,20 @@ export default function PenilaianPelatihan() {
     }
   };
 
-  const handleDeleteGroup = async (pelatihanId: string) => {
-    try {
-      const idsToDelete = penilaianData
-        .filter((p) => p.pelatihan_id === pelatihanId)
-        .map((p) => p.id);
-      await Promise.all(
-        idsToDelete.map((id) => axios.delete(`${baseUrl}/penilaian/${id}`))
-      );
-      message.success(`Deleted ${idsToDelete.length} penilaian`);
-      fetchData();
-    } catch {
-      message.error("Gagal menghapus penilaian");
-    }
-  };
+  // const handleDeleteGroup = async (pelatihanId: string) => {
+  //   try {
+  //     const idsToDelete = penilaianData
+  //       .filter((p) => p.pelatihan_id === pelatihanId)
+  //       .map((p) => p.id);
+  //     await Promise.all(
+  //       idsToDelete.map((id) => axios.delete(`${baseUrl}/penilaian/${id}`))
+  //     );
+  //     message.success(`Deleted ${idsToDelete.length} penilaian`);
+  //     fetchData();
+  //   } catch {
+  //     message.error("Gagal menghapus penilaian");
+  //   }
+  // };
 
   const handlePenilaianEdit = (record: Penilaian) => {
     setEditingPenilaian(record);
@@ -274,11 +274,17 @@ export default function PenilaianPelatihan() {
     setPenilaianModalVisible(true);
   };
 
-  const handlePenilaianDelete = async (id: string) => {
-    await axios.delete(`${baseUrl}/penilaian/${id}`);
-    message.success("Penilaian dihapus");
-    fetchData();
+  const handleDeleteGroup = async (pelatihanId: string) => {
+    try {
+      await axios.delete(`${baseUrl}/penilaian/pelatihan/${pelatihanId}`);
+      message.success("Semua penilaian & log berhasil dihapus");
+      fetchData(); // refresh
+    } catch (err) {
+      message.error("Gagal menghapus semua penilaian & log");
+    }
   };
+
+
 
   const handleViewDetail = async (record: Penilaian) => {
     try {
@@ -320,7 +326,7 @@ export default function PenilaianPelatihan() {
               </Button>
               <Popconfirm
                 title="Yakin hapus?"
-                onConfirm={() => handlePenilaianDelete(record.id)}
+                onConfirm={() => handleDeleteGroup(record.id)}
               >
                 {/* icon‐only delete button */}
                 <Button type="text" danger icon={<DeleteOutlined />} />
@@ -414,7 +420,7 @@ export default function PenilaianPelatihan() {
 
 
   const handlePelatihanDelete = async (id: string) => {
-    await axios.delete(`${baseUrl}/pelatihan/${id}`);
+    await axios.delete(`http://127.0.0.1:8000/api/pelatihans/${id}`);
     message.success("Pelatihan dihapus");
     fetchData();
   };
@@ -940,7 +946,7 @@ export default function PenilaianPelatihan() {
 
       </Modal>
 
-      {/* Modal Pelatihan */}
+      {/* Modal Tambah Pelatihan dan Edit Pelatihan */}
       <Modal
         open={isPelatihanModalVisible}
         title={editingPelatihan ? "Edit Pelatihan" : "Tambah Pelatihan"}

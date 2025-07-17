@@ -12,18 +12,19 @@ import axios from "axios";
 
 // 👇 Tipe route key yang valid
 type RouteKey = "/" | "/penilaian" | "/manajemen-user" | "/admin-unit";
-type Role = "admin" | "pegawai" | "atasan";
+type Role = "admin" | "pegawai" | "atasan" | "admin_unit";
 
 const menuMap: Record<RouteKey, { icon: React.ReactNode; label: string }> = {
   "/": { icon: <DashboardOutlined />, label: "Dashboard" },
   "/penilaian": { icon: <TableOutlined />, label: "Penilaian" },
   "/manajemen-user": { icon: <UserOutlined />, label: "Manajemen User" },
-  "/admin-unit": { icon: <MacCommandOutlined />, label: "Admin Unit" },
+  "/admin-unit": { icon: <MacCommandOutlined />, label: "Pelatihan" },
   // "/about": { icon: <MacCommandOutlined />, label: "About" },
 };
 
 const menuAccess: Record<Role, RouteKey[]> = {
-  admin: ["/", "/penilaian", "/manajemen-user", "/admin-unit"],
+  admin: ["/", "/penilaian", "/manajemen-user"],
+  admin_unit: ["/manajemen-user", "/admin-unit"], // 👈
   pegawai: ["/"],
   atasan: ["/", "/penilaian"],
 };
@@ -34,18 +35,11 @@ function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   const storedRole = localStorage.getItem("userRole") as Role | null;
-  const role: Role = storedRole === "admin" || storedRole === "atasan" || storedRole === "pegawai"
+  const role: Role = storedRole === "admin" || storedRole === "admin_unit" || storedRole === "atasan" || storedRole === "pegawai"
     ? storedRole
     : "pegawai"; // default role jika tidak valid
 
   const allowedMenus = menuAccess[role];
-
-  const menuItems = allowedMenus.map((key) => ({
-    key,
-    icon: menuMap[key].icon,
-    label: menuMap[key].label,
-    onClick: () => navigate(key),
-  }));
 
   const handleLogout = async () => {
     try {
@@ -67,6 +61,24 @@ function Sidebar() {
       navigate("/login");
     }
   };
+
+  const menuItems = [
+    ...allowedMenus.map((key) => ({
+      key,
+      icon: menuMap[key].icon,
+      label: menuMap[key].label,
+      onClick: () => navigate(key),
+    })),
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Logout",
+      onClick: handleLogout,
+    },
+  ];
+
+
+
 
   return (
     <div
@@ -100,36 +112,37 @@ function Sidebar() {
         />
       </div>
 
-      {/* Menu */}
-      <Menu
-        theme="dark"
-        mode="inline"
-        inlineCollapsed={collapsed}
-        selectedKeys={[location.pathname]}
-        style={{ flex: 1, paddingTop: 12 }}
-        items={menuItems}
-      />
+      {/* Menu dan Logout */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <Menu
+          theme="dark"
+          mode="inline"
+          inlineCollapsed={collapsed}
+          selectedKeys={[location.pathname]}
+          items={menuItems}
+          style={{ flex: 1 }}
+        />
 
-      {/* Logout */}
-      <div
-        style={{
-          marginTop: "auto",
-          padding: "16px",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        <Button
-          type="primary"
-          icon={<LogoutOutlined />}
-          danger
-          block
-          onClick={handleLogout}
+        <div
+          style={{
+            padding: "16px",
+            borderTop: "1px solid rgba(255,255,255,0.1)",
+          }}
         >
-          {!collapsed && "Logout"}
-        </Button>
+          {/* <Button
+            type="primary"
+            icon={<LogoutOutlined />}
+            danger
+            block
+            onClick={handleLogout}
+          >
+            {!collapsed && "Logout"}
+          </Button> */}
+        </div>
       </div>
     </div>
   );
+
 }
 
 export default Sidebar;
