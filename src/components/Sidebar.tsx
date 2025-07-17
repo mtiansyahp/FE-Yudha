@@ -26,7 +26,7 @@ const menuAccess: Record<Role, RouteKey[]> = {
   admin: ["/", "/penilaian", "/manajemen-user"],
   admin_unit: ["/manajemen-user", "/admin-unit"], // 👈
   pegawai: ["/"],
-  atasan: ["/", "/penilaian"],
+  atasan: ["/", "/penilaian", "/manajemen-user"],
 };
 
 function Sidebar() {

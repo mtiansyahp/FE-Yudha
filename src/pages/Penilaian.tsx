@@ -969,15 +969,15 @@ export default function PenilaianPelatihan() {
           >
             <DatePicker style={{ width: "100%" }} />
           </Form.Item>
-          <Form.Item name="deskripsi" label="Deskripsi">
+          {/* <Form.Item name="deskripsi" label="Deskripsi">
             <Input.TextArea />
-          </Form.Item>
-          <Form.Item name="syarat" label="Syarat">
+          </Form.Item> */}
+          {/* <Form.Item name="syarat" label="Syarat">
             <Input />
-          </Form.Item>
-          <Form.Item name="kualifikasi" label="Kualifikasi">
+          </Form.Item> */}
+          {/* <Form.Item name="kualifikasi" label="Kualifikasi">
             <Input />
-          </Form.Item>
+          </Form.Item> */}
           <Form.Item
             name="peserta"
             label="Peserta (Array ID)"
