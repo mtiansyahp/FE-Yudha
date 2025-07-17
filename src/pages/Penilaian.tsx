@@ -14,10 +14,13 @@ import {
   Collapse,
   Select,
   Checkbox,
+  Spin
 } from "antd";
 import { PlusOutlined, EyeOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
 import dayjs from "dayjs";
+import type { AxiosResponse } from "axios";
+
 
 /* ---------------- utils kecil, letakkan di paling atas file -------------- */
 // utils helper di atas file komponen:
@@ -101,6 +104,96 @@ interface Pelatihan {
   users?: Pegawai[];
 }
 
+
+interface LogDetailFull {
+  id: number;
+  created_at: string;
+  skor: number;
+  keterangan: string;
+  detail: Record<string, { mu: number; weight: number; product: number }>;
+  user: {
+    nama: string;
+    email: string;
+    jurusan: string;
+    pendidikan_terakhir: string;
+    umur: number;
+    posisi: string;
+    jabatan?: string;
+  };
+  pelatihan: {
+    nama_pelatihan: string;
+  };
+}
+
+
+function ExpandedDetailRow({
+  record,
+  baseUrl,
+}: {
+  record: Penilaian;
+  baseUrl: string;
+}) {
+  const [logData, setLogData] = useState<any>(null);
+  const [loadingLog, setLoadingLog] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setLoadingLog(true);
+      try {
+        const res = await axios.get<LogDetailFull>(
+          `${baseUrl}/log-penilaians/penilaian/${record.id}/user/${record.user_id}`
+        );
+        setLogData(res.data);
+      } catch {
+        // ...
+      } finally {
+        setLoadingLog(false);
+      }
+    })();
+  }, [record.id, record.user_id]);
+
+  if (loadingLog) return <Spin />;
+  if (!logData) return <div>Tidak ada detail log.</div>;
+
+  // parse detail
+  let parsed =
+    typeof logData.detail === "string"
+      ? JSON.parse(logData.detail)
+      : logData.detail || {};
+  const details = Object.entries(parsed).map(([komp, data]) => {
+    const d = data as { mu: number; weight: number; product: number };
+    return {
+      komp,
+      mu: Number(d.mu),
+      weight: Number(d.weight),
+      product: Number(d.product),
+    };
+  });
+
+
+
+  return (
+    <div>
+      <p><b>Log ID:</b> {logData.id}</p>
+      <p><b>Tanggal Log:</b> {logData.created_at}</p>
+      <Table
+        dataSource={details}
+        rowKey="komp"
+        size="small"
+        pagination={false}
+        bordered
+        columns={[
+          { title: "Komponen", dataIndex: "komp", key: "komp" },
+          { title: "Mu", dataIndex: "mu", key: "mu", render: v => toFixedSafe(v) },
+          { title: "Weight", dataIndex: "weight", key: "weight" },
+          { title: "Product", dataIndex: "product", key: "product", render: v => `${toFixedSafe(v * 100)}%` },
+        ]}
+      />
+    </div>
+  );
+}
+
+
 export default function PenilaianPelatihan() {
   const role = localStorage.getItem("userRole");
   const isPegawai = role === "pegawai";
@@ -123,6 +216,21 @@ export default function PenilaianPelatihan() {
     null
   );
   const [pelatihanForm] = Form.useForm();
+  const pesertaValue = Form.useWatch("peserta", pelatihanForm) || [] as number[];
+  // di atas return, setelah inisialisasi form:
+  const allPegawaiIds = useMemo(
+    () => pegawaiData
+      .filter(p => p.role === "pegawai")   // hanya yang role ='pegawai'
+      .map(p => p.id),
+    [pegawaiData]
+  );
+
+
+
+
+  // di dalam function PenilaianPelatihan(), setelah `const [pelatihanForm] = Form.useForm()`
+  const sertifikasiValue = Form.useWatch("sertifikasi", pelatihanForm);
+  const ikutPelatihanValue = Form.useWatch("ikut_pelatihan", pelatihanForm);
 
   const [selectedPeserta, setSelectedPeserta] = useState<Pegawai[]>([]);
   const [isPesertaModalVisible, setPesertaModalVisible] = useState(false);
@@ -289,17 +397,20 @@ export default function PenilaianPelatihan() {
   const handleViewDetail = async (record: Penilaian) => {
     try {
       const url = `${baseUrl}/log-penilaians/penilaian/${record.id}/user/${record.user_id}`;
-      const { data: log } = await axios.get(url);
+      // beri tahu axios tipe responsenya
+      const response: AxiosResponse<LogDetailFull> = await axios.get<LogDetailFull>(url);
+      const log = response.data;
 
       setSelectedDetail({
-        ...log,                                             // log sudah memiliki user, pelatihan, detail
+        ...log,
         skor: Number(log.skor) || 0,
       });
       setDetailVisible(true);
     } catch (err) {
-      message.error('Gagal mengambil detail');
+      message.error("Gagal mengambil detail");
     }
   };
+
 
 
 
@@ -351,6 +462,7 @@ export default function PenilaianPelatihan() {
 
       const selectedA = values.a_group || [];
       const selectedB = values.b_group || [];
+
 
       const allKeys = ['a1', 'a2', 'a3', 'a4', 'a5', 'b1', 'b2', 'b3', 'b4', 'b5'];
       const flags = Object.fromEntries(
@@ -815,62 +927,25 @@ export default function PenilaianPelatihan() {
         width={800}
       >
         {selectedSummary && (
-          <Table<Penilaian>
-            dataSource={[...selectedSummary.scores].sort((a, b) => b.skor - a.skor)}
+          <Table<Penilaian & { lolos?: string }>
+            // 1) sort semua peserta by skor desc, 2) tentukan top10, 3) tambahkan field `lolos`
+            dataSource={(() => {
+              const sorted = [...selectedSummary!.scores].sort((a, b) => b.skor - a.skor);
+              const top10Ids = sorted.slice(0, 10).map((s) => s.id);
+              return sorted.map((s) => ({
+                ...s,
+                lolos: top10Ids.includes(s.id) ? "Lolos" : "",
+              }));
+            })()}
             rowKey="id"
             pagination={false}
             bordered
-            // ————————— expandable untuk collapse/expand per baris —————————
             expandable={{
-              // untuk tiap baris peserta, tampilkan detail perhitungan:
-              expandedRowRender: (score) => {
-                let parsed = score.perhitungan;
-
-                // Tambahan: jika backend kirim string JSON, parse dulu
-                if (typeof parsed === "string") {
-                  try {
-                    parsed = JSON.parse(parsed);
-                  } catch (e) {
-                    console.error("Gagal parse perhitungan JSON:", e);
-                    parsed = {};
-                  }
-                }
-
-                const details = Object.entries(parsed).map(([komp, val]) => ({
-                  komp,
-                  val: Number(val), // pastikan nilainya number
-                }));
-
-
-                return (
-                  <Table
-                    dataSource={details}
-                    rowKey="komp"
-                    pagination={false}
-                    size="small"
-                    bordered
-                    columns={[
-                      {
-                        title: "Komponen",
-                        dataIndex: "komp",
-                        key: "komp",
-                      },
-                      {
-                        title: "Nilai",
-                        dataIndex: "val",
-                        key: "val",
-                        // 🔄 ganti render kolom "Nilai" di expandable <Table>:
-                        render: (v: any) => `${toFixedSafe(v)}%`
-                        ,
-                      },
-                    ]}
-                  />
-                );
-              },
-              // selalu boleh di-expand
+              expandedRowRender: (score) => (
+                <ExpandedDetailRow record={score} baseUrl={baseUrl} />
+              ),
               rowExpandable: () => true,
             }}
-            // ————————— kolom utama peserta —————————
             columns={[
               {
                 title: "Nama Pegawai",
@@ -881,16 +956,23 @@ export default function PenilaianPelatihan() {
                 title: "Skor (%)",
                 dataIndex: "skor",
                 key: "skor",
-                render: (v: any) => `${toFixedSafe(v)}%`
-
+                render: (v: number) => `${toFixedSafe(v)}%`,
               },
               {
                 title: "Keterangan",
                 dataIndex: "keterangan",
                 key: "keterangan",
               },
+              {
+                title: "Status Lolos",
+                dataIndex: "lolos",
+                key: "lolos",
+              },
             ]}
           />
+
+
+
         )}
       </Modal>
 
@@ -954,7 +1036,17 @@ export default function PenilaianPelatihan() {
         onCancel={() => setPelatihanModalVisible(false)}
         okText="Simpan"
       >
-        <Form layout="vertical" form={pelatihanForm}>
+        <Form
+          layout="vertical"
+          form={pelatihanForm}
+          initialValues={{
+            b_group: [],
+            a_group: [],
+            // sekarang boolean, bukan angka
+            sertifikasi: false,
+            ikut_pelatihan: false
+          }}
+        >
           <Form.Item
             name="nama_pelatihan"
             label="Nama Pelatihan"
@@ -969,9 +1061,9 @@ export default function PenilaianPelatihan() {
           >
             <DatePicker style={{ width: "100%" }} />
           </Form.Item>
-          {/* <Form.Item name="deskripsi" label="Deskripsi">
+          <Form.Item name="deskripsi" label="Deskripsi">
             <Input.TextArea />
-          </Form.Item> */}
+          </Form.Item>
           {/* <Form.Item name="syarat" label="Syarat">
             <Input />
           </Form.Item> */}
@@ -983,25 +1075,59 @@ export default function PenilaianPelatihan() {
             label="Peserta (Array ID)"
             rules={[{ required: true, message: "Pilih peserta pelatihan" }]}
           >
-            <Select
-              mode="multiple"
-              placeholder="Pilih peserta dari daftar pegawai"
-              optionLabelProp="label"
-              showSearch
-              filterOption={(input, option) =>
-                String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
+            <Space direction="vertical" style={{ width: "100%" }}>
+              {/* === tombol Select All & Clear All tetap ada di sini === */}
+              <Space style={{ marginBottom: 8 }}>
+                <Button
+                  size="small"
+                  type={pesertaValue.length === allPegawaiIds.length ? "default" : "primary"}
+                  disabled={pesertaValue.length === allPegawaiIds.length}
+                  onClick={() => pelatihanForm.setFieldsValue({ peserta: allPegawaiIds })}
+                >
+                  Select All
+                </Button>
 
-            >
-              {pegawaiData
-                .filter((p) => p.role === "pegawai") // pastikan filter role
-                .map((p) => (
-                  <Select.Option key={p.id} value={p.id} label={p.nama}>
-                    {p.nama} — {p.jabatan ?? p.posisi}
-                  </Select.Option>
-                ))}
-            </Select>
+                <Button
+                  size="small"
+                  type={pesertaValue.length === 0 ? "default" : "primary"}
+                  disabled={pesertaValue.length === 0}
+                  onClick={() => pelatihanForm.setFieldsValue({ peserta: [] })}
+                >
+                  Clear All
+                </Button>
+              </Space>
+
+              {/* === lalu baru Select-nya === */}
+              <Select
+                mode="multiple"
+                placeholder="Pilih peserta dari daftar pegawai"
+                optionLabelProp="label"
+                showSearch
+                allowClear
+                filterOption={(input, option) =>
+                  String(option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+                value={pesertaValue}
+                onChange={(vals: number[]) =>
+                  pelatihanForm.setFieldsValue({ peserta: vals })
+                }
+              >
+                {pegawaiData
+                  .filter(p => p.role === "pegawai")
+                  .map(p => (
+                    <Select.Option key={p.id} value={p.id} label={p.nama}>
+                      {p.nama} — {p.jabatan ?? p.posisi}
+                    </Select.Option>
+                  ))}
+              </Select>
+            </Space>
           </Form.Item>
+
+
+
+
 
           <Form.Item name="b_group" label="Kriteria B (b1–b5)">
             <Checkbox.Group>
@@ -1027,11 +1153,25 @@ export default function PenilaianPelatihan() {
             </Checkbox.Group>
           </Form.Item>
 
-          <Form.Item name="sertifikasi" label="Sertifikasi">
-            <Switch />
+          <Form.Item
+            name="sertifikasi"
+            label="Sertifikasi"
+            // ikat state checkbox ke `checked`
+            valuePropName="checked"
+          >
+            <Checkbox>
+              {/* label berubah sesuai nilai form */}
+              {sertifikasiValue ? "Ya" : "Tidak"}
+            </Checkbox>
           </Form.Item>
-          <Form.Item name="ikut_pelatihan" label="Ikut Pelatihan">
-            <Switch />
+          <Form.Item
+            name="ikut_pelatihan"
+            label="Ikut Pelatihan"
+            valuePropName="checked"
+          >
+            <Checkbox>
+              {ikutPelatihanValue ? "Ya" : "Tidak"}
+            </Checkbox>
           </Form.Item>
           <Form.Item
             name="pendidikan_terakhir"
@@ -1198,6 +1338,6 @@ export default function PenilaianPelatihan() {
         )}
 
       </Modal>
-    </div>
+    </div >
   );
 }
