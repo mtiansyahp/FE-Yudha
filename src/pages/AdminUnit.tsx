@@ -155,7 +155,7 @@ export default function AdminUnit() {
             );
             top10 = res.data
                 .sort((a, b) => b.skor - a.skor)
-                .slice(0, 10)
+                .slice(0, 25)
                 .map<PenilaianWithUser>(p => ({
                     ...p,
                     user: usersById[p.user_id] || { /* fallback */ }
@@ -187,7 +187,7 @@ export default function AdminUnit() {
         );
         doc.text(`Deskripsi: ${record.deskripsi}`, 20, 61);
 
-        doc.text("Berikut daftar 10 peserta dengan nilai terbaik:", 20, 75);
+        doc.text("Berikut daftar 20 peserta dengan nilai terbaik:", 20, 75);
         // ================================================
 
         autoTable(doc, {
@@ -206,10 +206,6 @@ export default function AdminUnit() {
 
         doc.save(`Surat_Permohonan_${record.nama_pelatihan}.pdf`);
     }
-
-
-
-
 
 
     const columns = [

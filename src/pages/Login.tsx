@@ -27,9 +27,9 @@ export function Login() {
                     ? '/atasan/dashboard'
                     : data.user.role === 'admin'
                         ? '/admin/dashboard'
-                        : '/pegawai/dashboard'
-
-
+                        : data.user.role === 'admin_unit'
+                            ? '/admin-unit'
+                            : '/pegawai/dashboard'
             );
         } catch (err: any) {
             if (err.response?.status === 401) {
