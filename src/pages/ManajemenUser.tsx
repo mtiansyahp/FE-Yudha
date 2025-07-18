@@ -62,6 +62,9 @@ const ManajemenUser: React.FC = () => {
   const [form] = Form.useForm();
   const [filterText, setFilterText] = useState("");
   const [filterPosisi, setFilterPosisi] = useState("");
+  const userRole = localStorage.getItem('userRole');
+  const userPosisi = localStorage.getItem('userPosisi'); // <-- posisi admin login
+
 
 
   const fetchData = async () => {
@@ -96,6 +99,7 @@ const ManajemenUser: React.FC = () => {
 
   const showModal = (record?: Pegawai) => {
     setEditingPegawai(record || null);
+
     if (record) {
       form.setFieldsValue({
         ...record,
@@ -112,10 +116,16 @@ const ManajemenUser: React.FC = () => {
         sertifikasi: record.sertifikasi === 1,
         ikut_pelatihan: record.ikut_pelatihan === 1,
       });
+    } else {
+      form.resetFields();
+      form.setFieldsValue({
+        posisi: userPosisi, // ⬅️ Set posisi default saat tambah pegawai
+      });
     }
-    else form.resetFields();
+
     setIsModalVisible(true);
   };
+
 
   const handleOk = async () => {
     try {
@@ -159,6 +169,11 @@ const ManajemenUser: React.FC = () => {
   const renderPelatihanTag = (label: string, value: number) =>
     value === 1 ? <Tag color="blue">{label}</Tag> : null;
 
+  const getAllowedPositions = () => {
+    if (userRole === 'admin_IGD') return ['IGD'];
+    if (userRole === 'admin_ICU') return ['ICU'];
+    return ['IGD', 'ICU']; // jika bukan admin spesifik, tampilkan semua
+  };
 
   const columns = [
     {
@@ -283,13 +298,16 @@ const ManajemenUser: React.FC = () => {
                 style={{ width: 200 }}
               />
 
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => showModal()}
-              >
-                Tambah Karyawan
-              </Button>
+              {['admin', 'admin_unit'].includes(userRole ?? "") && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => showModal()}
+                >
+                  Tambah Karyawan
+                </Button>
+              )}
+
             </Space>
           </Col>
         </Row>
@@ -352,13 +370,16 @@ const ManajemenUser: React.FC = () => {
             <Input />
           </Form.Item>
 
-          {/* Posisi */}
           <Form.Item name="posisi" label="Posisi" rules={[{ required: true }]}>
-            <Select placeholder="Pilih posisi">
-              <Option value="IGD">IGD</Option>
-              <Option value="ICU">ICU</Option>
+            <Select placeholder="Pilih posisi" disabled={userRole !== 'superadmin'}>
+              {['IGD', 'ICU'].map((p) => (
+                <Option key={p} value={p}>
+                  {p}
+                </Option>
+              ))}
             </Select>
           </Form.Item>
+
 
           {/* Pelatihan Dasar */}
           <Form.Item label="Pelatihan Dasar">

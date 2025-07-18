@@ -19,6 +19,7 @@ export function Login() {
             // simpan data user (tanpa token)
             localStorage.setItem('userId', data.user.id);
             localStorage.setItem('userRole', data.user.role);
+            localStorage.setItem('userPosisi', data.user.posisi); // Tambahkan ini
 
             message.success(`Login berhasil sebagai ${data.user.role}`);
 
