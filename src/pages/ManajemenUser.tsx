@@ -61,7 +61,7 @@ const ManajemenUser: React.FC = () => {
   const [editingPegawai, setEditingPegawai] = useState<Pegawai | null>(null);
   const [form] = Form.useForm();
   const [filterText, setFilterText] = useState("");
-  const [filterPosisi, setFilterPosisi] = useState("");
+  const [_filterPosisi, setFilterPosisi] = useState("");
   const userRole = localStorage.getItem('userRole');
   const userPosisi = localStorage.getItem('userPosisi'); // <-- posisi admin login
 
@@ -169,11 +169,7 @@ const ManajemenUser: React.FC = () => {
   const renderPelatihanTag = (label: string, value: number) =>
     value === 1 ? <Tag color="blue">{label}</Tag> : null;
 
-  const getAllowedPositions = () => {
-    if (userRole === 'admin_IGD') return ['IGD'];
-    if (userRole === 'admin_ICU') return ['ICU'];
-    return ['IGD', 'ICU']; // jika bukan admin spesifik, tampilkan semua
-  };
+
 
   const columns = [
     {

@@ -5,31 +5,38 @@ import { useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import AppRoutes from './routes/AppRoutes';
+import { useAuth } from './auth/AuthContext';
 
 const { Header, Sider, Content } = Layout;
 
 function App() {
   const location = useLocation();
+  const { user } = useAuth();
 
-  // Jika di /login, render hanya AppRoutes (yang akan menampilkan <Login />)
-  if (location.pathname === '/login') {
-    return <AppRoutes />;
-  }
+  const isLoginPage = location.pathname === '/login';
 
-  // Selain itu, render layout dengan Sidebar + Navbar
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible>
-        <Sidebar />
-      </Sider>
-      <Layout>
-        <Header style={{ background: '#fff', padding: 0 }}>
-          <Navbar />
-        </Header>
+      {/* Jika sedang di halaman login, tampilkan route saja */}
+      {isLoginPage || !user ? (
         <Content style={{ margin: '16px' }}>
           <AppRoutes />
         </Content>
-      </Layout>
+      ) : (
+        <>
+          <Sider collapsible>
+            <Sidebar />
+          </Sider>
+          <Layout>
+            <Header style={{ background: '#fff', padding: 0 }}>
+              <Navbar />
+            </Header>
+            <Content style={{ margin: '16px' }}>
+              <AppRoutes />
+            </Content>
+          </Layout>
+        </>
+      )}
     </Layout>
   );
 }
