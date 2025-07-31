@@ -1,10 +1,23 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useState,
+    ReactNode,
+    useEffect,
+} from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+interface UserData {
+    id: string;
+    role: string;
+    posisi: string;
+    [key: string]: any;
+}
+
 interface AuthContextType {
-    user: string | null;
-    login: (username: string, password: string) => Promise<void>;
+    user: UserData | null;
+    login: (user: UserData) => void;
     logout: () => void;
 }
 
@@ -12,30 +25,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const navigate = useNavigate();
-    const [user, setUser] = useState<string | null>(() => {
-        return localStorage.getItem('user');
+
+    const [user, setUser] = useState<UserData | null>(() => {
+        const stored = localStorage.getItem('user');
+        return stored ? JSON.parse(stored) : null;
     });
 
     useEffect(() => {
-        if (user) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
+        const token = localStorage.getItem('token');
+        if (token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         } else {
             delete axios.defaults.headers.common['Authorization'];
         }
     }, [user]);
 
-    const login = async (username: string, password: string) => {
-        const res = await axios.post('/api/login', { username, password });
-        // misal backend kembalikan { token, user }
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('user', res.data.user);
-        setUser(res.data.user);
-        navigate('/', { replace: true });
+    const login = (userData: UserData) => {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.clear();
         setUser(null);
         navigate('/login', { replace: true });
     };

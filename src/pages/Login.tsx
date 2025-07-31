@@ -1,8 +1,9 @@
 // src/pages/Login.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Row, Col, Form, Input, Button, Typography, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../auth/AuthContext';
 
 const { Title, Text } = Typography;
 const API_URL = 'http://localhost:3002';
@@ -11,27 +12,35 @@ export function Login() {
 
 
     const navigate = useNavigate();
+    const { user } = useAuth(); // jika kamu pakai context, atau ambil dari localStorage
+
+
+    const { login } = useAuth();
 
     const onFinish = async ({ email, password }: { email: string; password: string }) => {
         try {
-            const { data } = await axios.post('http://localhost:8000/api/login', { email, password });
+            const { data } = await axios.post('http://localhost:8000/api/login', {
+                email,
+                password,
+            });
 
-            // simpan data user (tanpa token)
-            localStorage.setItem('userId', data.user.id);
-            localStorage.setItem('userRole', data.user.role);
-            localStorage.setItem('userPosisi', data.user.posisi); // Tambahkan ini
+            const userData = {
+                id: data.user.id,
+                role: data.user.role,
+                posisi: data.user.posisi,
+            };
+
+            localStorage.setItem('token', data.token);
+            login(userData); // ⬅️ update context
 
             message.success(`Login berhasil sebagai ${data.user.role}`);
 
-            navigate(
-                data.user.role === 'atasan'
-                    ? '/atasan/dashboard'
-                    : data.user.role === 'admin'
-                        ? '/admin/dashboard'
-                        : data.user.role === 'admin_unit'
-                            ? '/admin-unit'
-                            : '/pegawai/dashboard'
-            );
+            // Redirect
+            if (data.user.role === 'admin') navigate('/admin/dashboard', { replace: true });
+            else if (data.user.role === 'admin_unit') navigate('/admin-unit', { replace: true });
+            else if (data.user.role === 'atasan') navigate('/atasan/dashboard', { replace: true });
+            else navigate('/pegawai/dashboard', { replace: true });
+
         } catch (err: any) {
             if (err.response?.status === 401) {
                 message.error('Email atau password salah');
@@ -40,6 +49,19 @@ export function Login() {
             }
         }
     };
+
+
+    // useEffect(() => {
+    //     const role = localStorage.getItem('userRole');
+    //     if (role) {
+    //         if (role === 'admin') navigate('/admin/dashboard', { replace: true });
+    //         else if (role === 'admin_unit') navigate('/admin-unit', { replace: true });
+    //         else if (role === 'atasan') navigate('/atasan/dashboard', { replace: true });
+    //         else navigate('/pegawai/dashboard', { replace: true });
+    //     }
+    // }, [navigate]); // ✅ tambahkan dependency array
+
+
 
 
     return (

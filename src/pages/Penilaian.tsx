@@ -1229,25 +1229,27 @@ export default function PenilaianPelatihan() {
           >
             <Select showSearch placeholder="Pilih posisi/jabatan">
               {[
-                "Administrasi",
-                "Analis Data dan Informasi",
-                "Arsiparis / Pranata Kearsipan",
-                "Bidan Ahli Muda",
-                "Bidan Terampil",
-                "Pengelola Kebidanan",
-                "Pengelola Keperawatan",
-                "Perawat Ahli",
-                "Perawat Ahli Madya",
-                "Perawat Ahli Muda",
-                "Perawat Ahli Pertama",
-                "Perawat Mahir",
-                "Perawat Penyelia",
-                "Perawat Terampil",
-                "Pramubakti",
-                "Pramubakti Portir",
-                "Sanitasi Lingkungan",
-                "Terapis Wicara",
-                "Tenaga Teknis Kefarmasian"
+                // "Administrasi",
+                // "Analis Data dan Informasi",
+                // "Arsiparis / Pranata Kearsipan",
+                // "Bidan Ahli Muda",
+                // "Bidan Terampil",
+                // "Pengelola Kebidanan",
+                // "Pengelola Keperawatan",
+                // "Perawat Ahli",
+                // "Perawat Ahli Madya",
+                // "Perawat Ahli Muda",
+                // "Perawat Ahli Pertama",
+                // "Perawat Mahir",
+                // "Perawat Penyelia",
+                // "Perawat Terampil",
+                // "Pramubakti",
+                // "Pramubakti Portir",
+                // "Sanitasi Lingkungan",
+                // "Terapis Wicara",
+                // "Tenaga Teknis Kefarmasian"
+                "ICU",
+                "IGD  "
               ].map((pos) => (
                 <Select.Option key={pos} value={pos}>
                   {pos}

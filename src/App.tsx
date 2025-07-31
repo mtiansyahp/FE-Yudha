@@ -15,6 +15,11 @@ function App() {
 
   const isLoginPage = location.pathname === '/login';
 
+  if (isLoginPage && !user) {
+    return <AppRoutes />;
+  }
+
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       {/* Jika sedang di halaman login, tampilkan route saja */}
